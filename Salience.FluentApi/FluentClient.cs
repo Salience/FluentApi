@@ -39,11 +39,12 @@ namespace Salience.FluentApi
             this.Serializer = GetNewDefaultSerializer();
         }
 
-        public void SetAuthenticator(IAuthenticator authenticator)
+        public IFluentClient SetAuthenticator(IAuthenticator authenticator)
         {
             Guard.NotNull(authenticator, "authenticator");
 
             _restClient.Authenticator = authenticator;
+            return this;
         }
 
         public IFluentClient AddTrace(ITraceWriter traceWriter)
@@ -62,13 +63,13 @@ namespace Salience.FluentApi
             return this;
         }
 
-        internal void Trace(TraceLevel level, string messageFormat, params object[] args)
+        private void Trace(TraceLevel level, string messageFormat, params object[] args)
         {
             foreach(var traceWriter in _traceWriters)
                 traceWriter.Trace(level, string.Format(messageFormat, args));
         }
 
-        internal void TraceError(TraceLevel level, Exception exception, string messageFormat, params object[] args)
+        private void TraceError(TraceLevel level, Exception exception, string messageFormat, params object[] args)
         {
             foreach(var traceWriter in _traceWriters)
                 traceWriter.Trace(level, string.Format(messageFormat, args), exception);

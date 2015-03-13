@@ -6,6 +6,9 @@ namespace Salience.FluentApi
 
     public interface ITraceWriter
     {
+        /// <summary>
+        /// Writes a trace message.
+        /// </summary>
         void Trace(TraceLevel level, string message, Exception exception = null);
     }
 }

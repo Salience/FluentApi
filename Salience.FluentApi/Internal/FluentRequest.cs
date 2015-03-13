@@ -1,127 +1,78 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using RestSharp;
 
-namespace Salience.FluentApi
+namespace Salience.FluentApi.Internal
 {
-    internal class FluentRequest : IRequestWithOperation, IRequestWithMethod, IRequestWithExpectedStatus
+    internal class FluentRequest : IEmptyRequest, IRequestWithOperation, IRequestWithMethod, IRequestWithExpectedStatus
     {
-        protected readonly RequestDescription _desc;
+        protected readonly FluentClient _client;
+        protected readonly RequestData _data;
 
-        public FluentRequest(RequestDescription description)
+        public FluentRequest(FluentClient client, RequestData description)
         {
-            _desc = description;
+            _client = client;
+            _data = description;
         }
 
-        private void TraceRequest()
+        IRequestWithOperation IEmptyRequest.To(string operation)
         {
-            var requestUri = _desc.RestClient.BuildUri(_desc.Request);
-            var requestBodyParameter = _desc.Request.Parameters.FirstOrDefault(p => p.Type == ParameterType.RequestBody);
-            var requestBodyContent = requestBodyParameter == null ? "(no body)" : requestBodyParameter.Value;
-            _desc.Trace(TraceLevel.Debug, "Trying to {0} by sending {1} request to {2} : {3}", _desc.Operation, _desc.Request.Method, requestUri, requestBodyContent);
+            Guard.NotNullOrEmpty(operation, "operation");
+
+            _data.Operation = operation;
+            return this;
         }
 
-        private void ValidateResponse()
-        {
-            var response = _desc.Response;
-
-            if(response.ErrorException != null)
-            {
-                _desc.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (transport level error): {1}", _desc.Operation, response.ErrorMessage);
-                throw new RestException("Transport level error: " + response.ErrorMessage, response.ErrorException);
-            }
-
-            string responseContent = response.Content ?? "(no content)";
-
-            if(_desc.ExpectedStatusCodes != null)
-            {
-                if(!_desc.ExpectedStatusCodes.Contains(response.StatusCode))
-                {
-                    _desc.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", _desc.Operation, response.StatusCode, responseContent);
-                    throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
-                }
-            }
-            else if(!(200 <= (int)response.StatusCode && (int)response.StatusCode < 300))
-            {
-                _desc.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", _desc.Operation, response.StatusCode, responseContent);
-                throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
-            }
-
-            _desc.Trace(TraceLevel.Debug, "Received response to {0}: {1}", _desc.Operation, responseContent);
-        }
-
-        private IRequestWithMethod DescribeRequest(Method method, string resourcePath, Action<RestRequest> requestCustomizer)
+        private IRequestWithMethod SetMethodAndPath(Method method, string resourcePath, Action<RestRequest> requestCustomizer = null)
         {
             Guard.NotNullOrEmpty(resourcePath, "resourcePath");
-            
-            try
-            {
-                _desc.ResourcePath = "/" + resourcePath.Trim('/');
-                _desc.Request = new RestRequest
-                {
-                    RequestFormat = DataFormat.Json,
-                    JsonSerializer = new JsonDotNetSerializerWrapper(_desc.Serializer),
-                    Method = method
-                };
 
-                if(requestCustomizer != null)
-                    requestCustomizer(_desc.Request);
-
-                if((method == Method.POST || method == Method.PUT)
-                   && !_desc.Request.Parameters.Any(p => p.Type == ParameterType.HttpHeader && p.Name == "Content-Type"))
-                    _desc.Request.AddHeader("Content-Type", "application/json");
-
-                return this;
-            }
-            catch(Exception ex)
-            {
-                _desc.TraceError(TraceLevel.Error, ex, "Could not {0} (error while creating request): {1}", _desc.Operation, ex.Message);
-                throw new RestException("Error while creating request: " + ex.Message, ex);
-            }
+            _data.Method = method;
+            _data.ResourcePath = "/" + resourcePath.Trim('/');
+            _data.RequestCustomizer = requestCustomizer;
+            return this;
         }
 
         IRequestWithMethod IRequestWithOperation.Get(string resourcePath)
         {
-            return this.DescribeRequest(Method.GET, resourcePath, null);
+            return this.SetMethodAndPath(Method.GET, resourcePath);
         }
 
         IRequestWithMethod IRequestWithOperation.Get(string resourcePath, Action<RestRequest> requestCustomizer)
         {
-            return this.DescribeRequest(Method.GET, resourcePath, requestCustomizer);
+            return this.SetMethodAndPath(Method.GET, resourcePath, requestCustomizer);
         }
 
         IRequestWithMethod IRequestWithOperation.Post(string resourcePath)
         {
-            return this.DescribeRequest(Method.POST, resourcePath, null);
+            return this.SetMethodAndPath(Method.POST, resourcePath);
         }
 
         IRequestWithMethod IRequestWithOperation.Post(string resourcePath, Action<RestRequest> requestCustomizer)
         {
-            return this.DescribeRequest(Method.POST, resourcePath, requestCustomizer);
+            return this.SetMethodAndPath(Method.POST, resourcePath, requestCustomizer);
         }
 
         IRequestWithMethod IRequestWithOperation.Put(string resourcePath)
         {
-            return this.DescribeRequest(Method.PUT, resourcePath, null);
+            return this.SetMethodAndPath(Method.PUT, resourcePath);
         }
 
         IRequestWithMethod IRequestWithOperation.Put(string resourcePath, Action<RestRequest> requestCustomizer)
         {
-            return this.DescribeRequest(Method.PUT, resourcePath, requestCustomizer);
+            return this.SetMethodAndPath(Method.PUT, resourcePath, requestCustomizer);
         }
 
         IRequestWithMethod IRequestWithOperation.Delete(string resourcePath)
         {
-            return this.DescribeRequest(Method.DELETE, resourcePath, null);
+            return this.SetMethodAndPath(Method.DELETE, resourcePath);
         }
 
         IRequestWithMethod IRequestWithOperation.Delete(string resourcePath, Action<RestRequest> requestCustomizer)
         {
-            return this.DescribeRequest(Method.DELETE, resourcePath, requestCustomizer);
+            return this.SetMethodAndPath(Method.DELETE, resourcePath, requestCustomizer);
         }
 
         IRequestWithUrl IRequestWithMethod.UsingBase(string otherBaseApiPath)
@@ -129,28 +80,29 @@ namespace Salience.FluentApi
             Guard.NotNullOrEmpty(otherBaseApiPath, "otherBaseApiPath");
 
             otherBaseApiPath = otherBaseApiPath.Trim();
-            _desc.BaseApiPath = string.IsNullOrEmpty(otherBaseApiPath) ? "" : "/" + otherBaseApiPath.Trim('/');
+            _data.BaseApiPath = string.IsNullOrEmpty(otherBaseApiPath) ? "" : "/" + otherBaseApiPath.Trim('/');
             return this;
         }
 
         IRequestWithExpectedStatus IRequestWithUrl.Expecting(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes)
         {
-            _desc.ExpectedStatusCodes = new[] { expectedStatusCode }.Concat(otherAcceptedStatusCodes).ToArray();
+            _data.ExpectedStatusCodes = new[] { expectedStatusCode }.Concat(otherAcceptedStatusCodes).ToArray();
             return this;
         }
 
         IExecutableRequest<T> IRequestWithUrl.Expecting<T>()
         {
-            return new FluentRequestWithContent<T>(_desc);
+            _data.ResponseBodyType = typeof(T);
+            return new FluentRequestWithContent<T>(_client, _data);
         }
 
         IExecutableRequest<TResult> IRequestWithUrl.Expecting<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
         {
             Guard.NotNull(resultGetter, "resultGetter");
 
-            _desc.ResponseBodyType = typeof(TResponse);
-            _desc.ResultGetter = resultGetter;
-            return new FluentRequestWithContent<TResult>(_desc);
+            _data.ResponseBodyType = typeof(TResponse);
+            _data.ResultGetter = resultGetter;
+            return new FluentRequestWithContent<TResult>(_client, _data);
         }
 
         IExecutableRequest<T> IRequestWithExpectedStatus.WithContent<T>()
@@ -165,81 +117,32 @@ namespace Salience.FluentApi
 
         void IExecutableRequest.Execute()
         {
-            _desc.Request.Resource = _desc.BaseApiPath + _desc.ResourcePath;
-
-            this.TraceRequest();
-            _desc.Response = _desc.RestClient.Execute(_desc.Request);
-            this.ValidateResponse();        
+            _client.HandleRequest(_data);
         }
 
-        Task IExecutableRequest.ExecuteAsync()
+        async Task IExecutableRequest.ExecuteAsync()
         {
-            _desc.Request.Resource = _desc.BaseApiPath + _desc.ResourcePath;
-
-            this.TraceRequest();
-
-            var tcs = new TaskCompletionSource<object>();
-            _desc.RestClient.ExecuteAsync(_desc.Request, (response, handle) =>
-            {
-                try
-                {
-                    _desc.Response = response;
-                    this.ValidateResponse();
-                    tcs.SetResult(null);
-                }
-                catch(Exception e)
-                {
-                    tcs.SetException(e);
-                }
-            });
-
-            return tcs.Task;
+            await _client.HandleRequestAsync(_data);
         }
     }
 
     internal class FluentRequestWithContent<T> : FluentRequest, IExecutableRequest<T>
     {
-        public FluentRequestWithContent(RequestDescription description)
-            : base(description)
+        public FluentRequestWithContent(FluentClient client, RequestData description)
+            : base(client, description)
         {
-        }
-
-        private T DeserializeResponseContent()
-        {
-            try
-            {
-                using(var reader = new StringReader(_desc.Response.Content))
-                {
-                    var jsonReader = new JsonTextReader(reader);
-
-                    if(_desc.ResultGetter != null)
-                    {
-                        var responseBody = _desc.Serializer.Deserialize(jsonReader, _desc.ResponseBodyType);
-                        return (T)_desc.ResultGetter.DynamicInvoke(responseBody);
-                    }
-                    else
-                    {
-                        return _desc.Serializer.Deserialize<T>(jsonReader);                       
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                _desc.TraceError(TraceLevel.Error, ex, "Could not {0} (error while deserializing response): {1}", _desc.Operation, ex.Message);
-                throw new RestException("Error while deserializing response: " + ex.Message, ex);
-            }
         }
 
         T IExecutableRequest<T>.Execute()
         {
-            ((IExecutableRequest)this).Execute();
-            return this.DeserializeResponseContent();
+            _client.HandleRequest(_data);
+            return (T)_data.Result;
         }
 
         async Task<T> IExecutableRequest<T>.ExecuteAsync()
         {
-            await ((IExecutableRequest)this).ExecuteAsync();
-            return this.DeserializeResponseContent();
+            await _client.HandleRequestAsync(_data);
+            return (T)_data.Result;
         }
     }
 }

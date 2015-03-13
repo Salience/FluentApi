@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="FluentClient.cs" />
     <Compile Include="Internal\FluentRequest.cs" />
+    <Compile Include="IEmptyRequest.cs" />
     <Compile Include="Utils\Guard.cs" />
     <Compile Include="IExecutableRequest.cs" />
     <Compile Include="IFluentClient.cs" />
@@ -59,7 +60,7 @@
     <Compile Include="ITraceWriter.cs" />
     <Compile Include="Utils\JsonDotNetSerializerWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Internal\RequestDescription.cs" />
+    <Compile Include="Internal\RequestData.cs" />
     <Compile Include="RestException.cs" />
   </ItemGroup>
   <ItemGroup>

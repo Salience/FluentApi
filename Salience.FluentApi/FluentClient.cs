@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RestSharp;
+using Salience.FluentApi.Internal;
 
 namespace Salience.FluentApi
 {
@@ -63,31 +67,172 @@ namespace Salience.FluentApi
             return this;
         }
 
-        private void Trace(TraceLevel level, string messageFormat, params object[] args)
+        public IRequestWithOperation To(string operation)
+        {
+            var data = this.CreateRequestData();
+            var request = this.CreateEmptyRequest(data);
+            return request.To(operation);
+        }
+
+        protected internal virtual RequestData CreateRequestData()
+        {
+            return new RequestData
+            {
+                BaseApiPath = _defaultBaseApiPath
+            };
+        }
+
+        protected internal virtual IEmptyRequest CreateEmptyRequest(RequestData data)
+        {
+            return new FluentRequest(this, data);
+        }
+
+        protected internal virtual void Trace(TraceLevel level, string messageFormat, params object[] args)
         {
             foreach(var traceWriter in _traceWriters)
                 traceWriter.Trace(level, string.Format(messageFormat, args));
         }
 
-        private void TraceError(TraceLevel level, Exception exception, string messageFormat, params object[] args)
+        protected internal virtual void TraceError(TraceLevel level, Exception exception, string messageFormat, params object[] args)
         {
             foreach(var traceWriter in _traceWriters)
                 traceWriter.Trace(level, string.Format(messageFormat, args), exception);
         }
 
-        public IRequestWithOperation To(string operation)
+        protected internal virtual void HandleRequest(RequestData data)
         {
-            Guard.NotNullOrEmpty(operation, "operation");
+            this.CreateRestRequest(data);
+            this.ConfigureRequest(data);
+            this.TraceRequest(data);
+            this.ExecuteRequest(data);
+            this.ValidateResponse(data);
+            this.TraceResponse(data);
+            this.DeserializeResponseContent(data);
+        }
 
-            return new FluentRequest(new RequestDescription
+        protected internal virtual async Task HandleRequestAsync(RequestData data)
+        {
+            this.CreateRestRequest(data);
+            this.ConfigureRequest(data);
+            this.TraceRequest(data);
+            await this.ExecuteRequestAsync(data);
+            this.ValidateResponse(data);
+            this.TraceResponse(data);
+            this.DeserializeResponseContent(data);
+        }
+
+        protected internal virtual void CreateRestRequest(RequestData data)
+        {
+            data.Request = new RestRequest
             {
-                RestClient = _restClient,
-                Serializer = this.Serializer,
-                Operation = operation,
-                BaseApiPath = _defaultBaseApiPath,
-                Trace = this.Trace,
-                TraceError = this.TraceError
+                RequestFormat = DataFormat.Json,
+                JsonSerializer = new JsonDotNetSerializerWrapper(this.Serializer)
+            };
+        }
+
+        protected internal virtual void ConfigureRequest(RequestData data)
+        {
+            try
+            {
+                data.Request.Resource = data.BaseApiPath + data.ResourcePath;
+                data.Request.Method = data.Method;
+                if(data.RequestCustomizer != null)
+                    data.RequestCustomizer(data.Request);
+
+                if(data.Method == Method.POST || data.Method == Method.PUT)
+                    if(!data.Request.Parameters.Any(p => p.Type == ParameterType.HttpHeader && p.Name == "Content-Type"))
+                        data.Request.AddHeader("Content-Type", "application/json");
+            }
+            catch(Exception ex)
+            {
+                this.TraceError(TraceLevel.Error, ex, "Could not {0} (error while creating request): {1}", data.Operation, ex.Message);
+                throw new RestException("Error while creating request: " + ex.Message, ex);
+            }
+        }
+
+        protected internal virtual void TraceRequest(RequestData data)
+        {
+            var requestUri = _restClient.BuildUri(data.Request);
+            var requestBodyParameter = data.Request.Parameters.FirstOrDefault(p => p.Type == ParameterType.RequestBody);
+            var requestBodyContent = requestBodyParameter == null ? "(no body)" : requestBodyParameter.Value;
+            this.Trace(TraceLevel.Debug, "Trying to {0} by sending {1} request to {2} : {3}", data.Operation, data.Request.Method, requestUri, requestBodyContent);
+        }
+
+        protected internal virtual void ExecuteRequest(RequestData data)
+        {
+            data.Response = _restClient.Execute(data.Request);
+        }
+
+        protected internal virtual Task ExecuteRequestAsync(RequestData data)
+        {
+            var tcs = new TaskCompletionSource<object>();
+            _restClient.ExecuteAsync(data.Request, (response, handle) =>
+            {
+                try
+                {
+                    data.Response = response;
+                    tcs.SetResult(null);
+                }
+                catch(Exception e)
+                {
+                    tcs.SetException(e);
+                }
             });
+
+            return tcs.Task;
+        }
+
+        protected internal virtual void ValidateResponse(RequestData data)
+        {
+            var response = data.Response;
+
+            if(response.ErrorException != null)
+            {
+                this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (transport level error): {1}", data.Operation, response.ErrorMessage);
+                throw new RestException("Transport level error: " + response.ErrorMessage, response.ErrorException);
+            }
+
+            string responseContent = response.Content ?? "(no content)";
+            if(data.ExpectedStatusCodes != null)
+            {
+                if(!data.ExpectedStatusCodes.Contains(response.StatusCode))
+                {
+                    this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
+                    throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
+                }
+            }
+            else if(!(200 <= (int)response.StatusCode && (int)response.StatusCode < 300))
+            {
+                this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
+                throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
+            }
+        }
+
+        protected internal virtual void TraceResponse(RequestData data)
+        {
+            this.Trace(TraceLevel.Debug, "Received response to {0}: {1}", data.Operation, data.Response.Content ?? "(no content)");
+        }
+
+        protected internal virtual void DeserializeResponseContent(RequestData data)
+        {
+            if(data.ResponseBodyType == null)
+                return;
+
+            try
+            {
+                using(var reader = new StringReader(data.Response.Content))
+                {
+                    var jsonReader = new JsonTextReader(reader);
+
+                    var responseBody = this.Serializer.Deserialize(jsonReader, data.ResponseBodyType);
+                    data.Result = (data.ResultGetter != null ? data.ResultGetter.DynamicInvoke(responseBody) : responseBody);
+                }
+            }
+            catch(Exception ex)
+            {
+                this.TraceError(TraceLevel.Error, ex, "Could not {0} (error while deserializing response): {1}", data.Operation, ex.Message);
+                throw new RestException("Error while deserializing response: " + ex.Message, ex);
+            }
         }
     }
 }

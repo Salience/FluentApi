@@ -144,9 +144,23 @@ namespace Salience.FluentApi
             return new FluentRequestWithContent<T>(_desc);
         }
 
+        IExecutableRequest<TResult> IRequestWithUrl.Expecting<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
+        {
+            Guard.NotNull(resultGetter, "resultGetter");
+
+            _desc.ResponseBodyType = typeof(TResponse);
+            _desc.ResultGetter = resultGetter;
+            return new FluentRequestWithContent<TResult>(_desc);
+        }
+
         IExecutableRequest<T> IRequestWithExpectedStatus.WithContent<T>()
         {
-            return new FluentRequestWithContent<T>(_desc);
+            return ((IRequestWithUrl)this).Expecting<T>();
+        }
+
+        IExecutableRequest<TResult> IRequestWithExpectedStatus.WithContent<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
+        {           
+            return ((IRequestWithUrl)this).Expecting(resultGetter);
         }
 
         void IExecutableRequest.Execute()
@@ -197,7 +211,16 @@ namespace Salience.FluentApi
                 using(var reader = new StringReader(_desc.Response.Content))
                 {
                     var jsonReader = new JsonTextReader(reader);
-                    return _desc.Serializer.Deserialize<T>(jsonReader);
+
+                    if(_desc.ResultGetter != null)
+                    {
+                        var responseBody = _desc.Serializer.Deserialize(jsonReader, _desc.ResponseBodyType);
+                        return (T)_desc.ResultGetter.DynamicInvoke(responseBody);
+                    }
+                    else
+                    {
+                        return _desc.Serializer.Deserialize<T>(jsonReader);                       
+                    }
                 }
             }
             catch(Exception ex)

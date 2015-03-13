@@ -61,10 +61,9 @@ namespace FluentApi.TwitterExample
             var obtainBearerRequest = oauthClient
                 .To("obtain a bearer token")
                 .Post("token", r => r.AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
-                .Expecting<dynamic>();
+                .Expecting((dynamic response) => (string)response.access_token);
 
-            var bearerResponse = obtainBearerRequest.Execute();
-            string accessToken = bearerResponse.access_token;
+            var accessToken = obtainBearerRequest.Execute();
 
             // Authenticate API requests with the bearer token
             var apiClient = new FluentClient("https://api.twitter.com", "/1.1");

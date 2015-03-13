@@ -18,6 +18,8 @@ namespace Salience.FluentApi
         public string BaseApiPath { get; set; }
         public string ResourcePath { get; set; }
         public HttpStatusCode[] ExpectedStatusCodes { get; set; }
+        public Type ResponseBodyType { get; set; }
+        public Delegate ResultGetter { get; set; }
         public IRestResponse Response { get; set; }
     }
 }

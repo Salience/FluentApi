@@ -12,34 +12,39 @@ class Program
     {
         // Use Application-only authentication to obtain a bearer token
         var oauthClient = new FluentClient("https://api.twitter.com", "/oauth2");
-        oauthClient.AddTrace(new ConsoleTraceWriter());
+        //oauthClient.AddTrace(new ConsoleTraceWriter()); // uncomment to see requests in console
         oauthClient.SetAuthenticator(new HttpBasicAuthenticator("<yourApiKey>", "<yourSecret>"));
             
-        var obtainBearerRequest = oauthClient
+        var obtainBearerTokenRequest = oauthClient
             .To("obtain a bearer token")
             .Post("token", r => r.AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
-            .Expecting<dynamic>();
+            .Expecting((dynamic response) => (string)response.access_token);
 
-        var bearerResponse = obtainBearerRequest.Execute();
-        string accessToken = bearerResponse.access_token;
+        var accessToken = obtainBearerTokenRequest.Execute();
 
         // Authenticate API requests with the bearer token
         var apiClient = new FluentClient("https://api.twitter.com", "/1.1");
-        apiClient.SetAuthenticator(new OAuth2AuthorizationRequestHeaderAuthenticator(accessToken, "Bearer"));
+        apiClient.Serializer.ContractResolver = 
+            new UnderscorePropertyNamesContractResolver(); // because we all love PascalCase
+        apiClient.SetAuthenticator(
+            new OAuth2AuthorizationRequestHeaderAuthenticator(accessToken, "Bearer"));
 
         // Use the authenticated client to perform requests
-        var searchRequest = apiClient
+        var searchTweetsRequest = apiClient
             .To("search for tweets")
             .Get("search/tweets.json", r => r
                 .AddParameter("q", "@twitterapi")
                 .AddParameter("result_type", "recent")
                 .AddParameter("count", 50))
-            .Expecting<TwitterSearchResult>();
+            .Expecting((TwitterSearchResult result) => result.Statuses);
 
-        var searchResult = searchRequest.Execute();
+        var tweets = searchTweetsRequest.Execute();
         Console.WriteLine("=== RESULTS ===");
-        foreach(var tweet in searchResult.Statuses)
-            Console.WriteLine("{0}: \"{1}\"", tweet.User.Name, tweet.Text);
+        foreach(var tweet in tweets)
+        {
+            Console.WriteLine("@{0}: \"{1}\" at {2}{3}", 
+                tweet.User.ScreenName, tweet.Text, tweet.CreatedAt, Environment.NewLine);
+        }
 
         Console.ReadLine();
     }
@@ -48,23 +53,20 @@ class Program
     {
         public long Id { get; set; }
         public string Name { get; set; }
-        public string Screen_name { get; set; }
+        public string ScreenName { get; set; }
         public string Description { get; set; }
-        public string Lang { get; set; }
 
-        public int Followers_count { get; set; }
-        public int Friends_count { get; set; }
+        public int FollowersCount { get; set; }
+        public int FriendsCount { get; set; }
     }
 
     class TwitterStatus
     {
-        public string Created_at { get; set; }
+        public string CreatedAt { get; set; }
 
         public long Id { get; set; }
         public TwitterUser User { get; set; }
         public string Text { get; set; }
-        public string Source { get; set; }
-        public string Lang { get; set; }
 
         public bool Favorited { get; set; }
         public bool Retweeted { get; set; }
@@ -73,14 +75,6 @@ class Program
     class TwitterSearchResult
     {
         public TwitterStatus[] Statuses { get; set; }
-    }
-
-    class ConsoleTraceWriter : ITraceWriter
-    {
-        public void Trace(TraceLevel level, string message, Exception exception = null)
-        {
-            Console.WriteLine("[{0}] {1}", level, message);
-        }
     }
 }
 ```

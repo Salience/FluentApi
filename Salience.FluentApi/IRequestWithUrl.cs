@@ -2,8 +2,9 @@ using System.Net;
 
 namespace Salience.FluentApi
 {
-    public interface IRequestWithUrl
+    public interface IRequestWithUrl : IExecutableRequest
     {
-        IRequestWithExpectedStatus Expecting(params HttpStatusCode[] acceptedStatusCodes);
+        IRequestWithExpectedStatus Expecting(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes);
+        IExecutableRequest<T> Expecting<T>();
     }
 }

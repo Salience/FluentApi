@@ -37,7 +37,15 @@ namespace Salience.FluentApi
 
             string responseContent = response.Content ?? "(no content)";
 
-            if(!_desc.ExpectedStatusCodes.Contains(response.StatusCode))
+            if(_desc.ExpectedStatusCodes != null)
+            {
+                if(!_desc.ExpectedStatusCodes.Contains(response.StatusCode))
+                {
+                    _desc.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", _desc.Operation, response.StatusCode, responseContent);
+                    throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
+                }
+            }
+            else if(!(200 <= (int)response.StatusCode && (int)response.StatusCode < 300))
             {
                 _desc.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", _desc.Operation, response.StatusCode, responseContent);
                 throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
@@ -125,13 +133,15 @@ namespace Salience.FluentApi
             return this;
         }
 
-        IRequestWithExpectedStatus IRequestWithUrl.Expecting(params HttpStatusCode[] expectedStatusCodes)
+        IRequestWithExpectedStatus IRequestWithUrl.Expecting(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes)
         {
-            if(!expectedStatusCodes.Any())
-                expectedStatusCodes = new[] { HttpStatusCode.OK };
-
-            _desc.ExpectedStatusCodes = expectedStatusCodes;
+            _desc.ExpectedStatusCodes = new[] { expectedStatusCode }.Concat(otherAcceptedStatusCodes).ToArray();
             return this;
+        }
+
+        IExecutableRequest<T> IRequestWithUrl.Expecting<T>()
+        {
+            return new FluentRequestWithContent<T>(_desc);
         }
 
         IExecutableRequest<T> IRequestWithExpectedStatus.WithContent<T>()

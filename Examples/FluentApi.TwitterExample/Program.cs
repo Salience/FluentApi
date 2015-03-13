@@ -61,7 +61,7 @@ namespace FluentApi.TwitterExample
             var obtainBearerRequest = oauthClient
                 .To("obtain a bearer token")
                 .Post("token", r => r.AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
-                .Expecting(HttpStatusCode.OK).WithContent<dynamic>();
+                .Expecting<dynamic>();
 
             var bearerResponse = obtainBearerRequest.Execute();
             string accessToken = bearerResponse.access_token;
@@ -77,12 +77,14 @@ namespace FluentApi.TwitterExample
                     .AddParameter("q", "@twitterapi")
                     .AddParameter("result_type", "recent")
                     .AddParameter("count", 50))
-                .Expecting(HttpStatusCode.OK).WithContent<TwitterSearchResult>();
+                .Expecting<TwitterSearchResult>();
 
             var searchResult = searchRequest.Execute();
             Console.WriteLine("=== RESULTS ===");
             foreach(var tweet in searchResult.Statuses)
                 Console.WriteLine("{0}: \"{1}\"", tweet.User.Name, tweet.Text);
+
+            Console.ReadLine();
         }
     }
 }

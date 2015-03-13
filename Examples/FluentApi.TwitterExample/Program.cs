@@ -9,23 +9,26 @@ namespace FluentApi.TwitterExample
         static void Main(string[] args)
         {
             // Use Application-only authentication to obtain a bearer token
-            var oauthClient = new FluentClient("https://api.twitter.com", "/oauth2");
+            var oauthClient = new FluentClient("https://api.twitter.com");
             //oauthClient.AddTrace(new ConsoleTraceWriter()); // uncomment to see requests in console
             oauthClient.SetAuthenticator(new HttpBasicAuthenticator("<yourApiKey>", "<yourSecret>"));
             
             var obtainBearerTokenRequest = oauthClient
                 .To("obtain a bearer token")
-                .Post("token", r => r.AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
+                .Post("oauth2/token", r => r
+                    .AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
                 .Expecting((dynamic response) => (string)response.access_token);
 
             var accessToken = obtainBearerTokenRequest.Execute();
 
             // Authenticate API requests with the bearer token
             var apiClient = new FluentClient("https://api.twitter.com", "/1.1");
-            apiClient.Serializer.ContractResolver = 
-                new UnderscorePropertyNamesContractResolver(); // because we all love PascalCase
             apiClient.SetAuthenticator(
                 new OAuth2AuthorizationRequestHeaderAuthenticator(accessToken, "Bearer"));
+
+            // Twitter use underscores but we love PascalCase
+            apiClient.Serializer.ContractResolver =
+                new UnderscorePropertyNamesContractResolver();
 
             // Use the authenticated client to perform requests
             var searchTweetsRequest = apiClient

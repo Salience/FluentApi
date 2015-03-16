@@ -128,6 +128,7 @@ namespace Salience.FluentApi
                 RequestFormat = DataFormat.Json,
                 JsonSerializer = new JsonDotNetSerializerWrapper(this.Serializer)
             };
+            data.Request.AddHeader("Accept", "application/json, text/json, text/x-json, text/javascript");
         }
 
         protected internal virtual void ConfigureRequest(RequestData data)

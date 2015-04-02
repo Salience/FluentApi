@@ -50,6 +50,7 @@
     <Compile Include="FluentClient.cs" />
     <Compile Include="Internal\FluentRequest.cs" />
     <Compile Include="IEmptyRequest.cs" />
+    <Compile Include="IRequestWithContent.cs" />
     <Compile Include="Utils\Guard.cs" />
     <Compile Include="IExecutableRequest.cs" />
     <Compile Include="IFluentClient.cs" />

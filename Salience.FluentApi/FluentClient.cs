@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -107,7 +108,7 @@ namespace Salience.FluentApi
             this.ExecuteRequest(data);
             this.ValidateResponse(data);
             this.TraceResponse(data);
-            this.DeserializeResponseContent(data);
+            this.GetResultFromResponse(data);
         }
 
         protected internal virtual async Task HandleRequestAsync(RequestData data)
@@ -118,7 +119,7 @@ namespace Salience.FluentApi
             await this.ExecuteRequestAsync(data);
             this.ValidateResponse(data);
             this.TraceResponse(data);
-            this.DeserializeResponseContent(data);
+            this.GetResultFromResponse(data);
         }
 
         protected internal virtual void CreateRestRequest(RequestData data)
@@ -187,26 +188,26 @@ namespace Salience.FluentApi
         {
             var response = data.Response;
 
+            // check transport error
             if(response.ErrorException != null)
             {
                 this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (transport level error): {1}", data.Operation, response.ErrorMessage);
                 throw new RestException("Transport level error: " + response.ErrorMessage, response.ErrorException);
             }
 
+            // check status
+            if(response.StatusCode == HttpStatusCode.NotFound && data.HasDefaultResult)
+                return;
+
+            if(data.ExpectedStatusCodes != null && data.ExpectedStatusCodes.Contains(response.StatusCode))
+                return;
+
+            if(200 <= (int)response.StatusCode && (int)response.StatusCode < 300)
+                return;
+
             string responseContent = response.Content ?? "(no content)";
-            if(data.ExpectedStatusCodes != null)
-            {
-                if(!data.ExpectedStatusCodes.Contains(response.StatusCode))
-                {
-                    this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
-                    throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
-                }
-            }
-            else if(!(200 <= (int)response.StatusCode && (int)response.StatusCode < 300))
-            {
-                this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
-                throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
-            }
+            this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
+            throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
         }
 
         protected internal virtual void TraceResponse(RequestData data)
@@ -214,10 +215,16 @@ namespace Salience.FluentApi
             this.Trace(TraceLevel.Debug, "Received response to {0}: {1}", data.Operation, data.Response.Content ?? "(no content)");
         }
 
-        protected internal virtual void DeserializeResponseContent(RequestData data)
+        protected internal virtual void GetResultFromResponse(RequestData data)
         {
             if(data.ResponseBodyType == null)
                 return;
+
+            if(data.Response.StatusCode == HttpStatusCode.NotFound && data.HasDefaultResult)
+            {
+                data.Result = data.DefaultResult;
+                return;
+            }
 
             try
             {

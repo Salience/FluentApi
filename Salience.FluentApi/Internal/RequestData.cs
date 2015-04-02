@@ -12,11 +12,13 @@ namespace Salience.FluentApi.Internal
         public Method Method { get; set; }
         public Action<RestRequest> RequestCustomizer { get; set; }
         public HttpStatusCode[] ExpectedStatusCodes { get; set; }
-        public Type ResponseBodyType { get; set; }
-        public Delegate ResultGetter { get; set; }
-
         public RestRequest Request { get; set; }
+
+        public Type ResponseBodyType { get; set; }
         public IRestResponse Response { get; set; }
+        public bool HasDefaultResult { get; set; }
+        public object DefaultResult { get; set; }
+        public Delegate ResultGetter { get; set; }
         public object Result { get; set; }
     }
 }

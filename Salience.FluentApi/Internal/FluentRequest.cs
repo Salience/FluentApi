@@ -90,13 +90,13 @@ namespace Salience.FluentApi.Internal
             return this;
         }
 
-        IExecutableRequest<T> IRequestWithUrl.Expecting<T>()
+        IRequestWithContent<T> IRequestWithUrl.Expecting<T>()
         {
             _data.ResponseBodyType = typeof(T);
             return new FluentRequestWithContent<T>(_client, _data);
         }
 
-        IExecutableRequest<TResult> IRequestWithUrl.Expecting<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
+        IRequestWithContent<TResult> IRequestWithUrl.Expecting<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
         {
             Guard.NotNull(resultGetter, "resultGetter");
 
@@ -105,12 +105,12 @@ namespace Salience.FluentApi.Internal
             return new FluentRequestWithContent<TResult>(_client, _data);
         }
 
-        IExecutableRequest<T> IRequestWithExpectedStatus.WithContent<T>()
+        IRequestWithContent<T> IRequestWithExpectedStatus.WithContent<T>()
         {
             return ((IRequestWithUrl)this).Expecting<T>();
         }
 
-        IExecutableRequest<TResult> IRequestWithExpectedStatus.WithContent<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
+        IRequestWithContent<TResult> IRequestWithExpectedStatus.WithContent<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
         {           
             return ((IRequestWithUrl)this).Expecting(resultGetter);
         }
@@ -126,11 +126,23 @@ namespace Salience.FluentApi.Internal
         }
     }
 
-    internal class FluentRequestWithContent<T> : FluentRequest, IExecutableRequest<T>
+    internal class FluentRequestWithContent<T> : FluentRequest, IRequestWithContent<T>
     {
         public FluentRequestWithContent(FluentClient client, RequestData description)
             : base(client, description)
         {
+        }
+
+        IExecutableRequest<T> IRequestWithContent<T>.OrIfNotFound(T defaultResult)
+        {
+            _data.HasDefaultResult = true;
+            _data.DefaultResult = defaultResult;
+            return this;
+        }
+
+        IExecutableRequest<T> IRequestWithContent<T>.OrDefaultIfNotFound()
+        {
+            return ((IRequestWithContent<T>)this).OrIfNotFound(default(T));
         }
 
         T IExecutableRequest<T>.Execute()

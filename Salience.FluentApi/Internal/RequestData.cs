@@ -14,6 +14,7 @@ namespace Salience.FluentApi.Internal
         public HttpStatusCode[] ExpectedStatusCodes { get; set; }
         public RestRequest Request { get; set; }
 
+        public bool ReturnRawResponseContent { get; set; }
         public Type ResponseBodyType { get; set; }
         public IRestResponse Response { get; set; }
         public bool HasDefaultResult { get; set; }

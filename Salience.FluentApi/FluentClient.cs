@@ -217,6 +217,12 @@ namespace Salience.FluentApi
 
         protected internal virtual void GetResultFromResponse(RequestData data)
         {
+            if(data.ReturnRawResponseContent)
+            {
+                data.Result = data.Response.Content;
+                return;
+            }
+
             if(data.ResponseBodyType == null)
                 return;
 

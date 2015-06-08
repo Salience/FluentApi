@@ -105,6 +105,12 @@ namespace Salience.FluentApi.Internal
             return new FluentRequestWithContent<TResult>(_client, _data);
         }
 
+        IRequestWithContent<string> IRequestWithExpectedStatus.WithRawContent()
+        {
+            _data.ReturnRawResponseContent = true;
+            return new FluentRequestWithContent<string>(_client, _data);
+        }
+
         IRequestWithContent<T> IRequestWithExpectedStatus.WithContent<T>()
         {
             return ((IRequestWithUrl)this).Expecting<T>();

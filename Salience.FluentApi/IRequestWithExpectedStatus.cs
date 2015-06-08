@@ -5,6 +5,12 @@ namespace Salience.FluentApi
     public interface IRequestWithExpectedStatus : IExecutableRequest
     {
         /// <summary>
+        /// Specifies that the request result should be the raw string content received.
+        /// </summary>
+        /// <returns>This request</returns>
+        IRequestWithContent<string> WithRawContent();
+
+        /// <summary>
         /// Specifies the type of the expected response body.
         /// </summary>
         /// <typeparam name="T">The type of the expected response body</typeparam>

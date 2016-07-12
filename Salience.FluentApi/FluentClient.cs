@@ -206,7 +206,15 @@ namespace Salience.FluentApi
 
             string responseContent = response.Content ?? "(no content)";
             this.TraceError(TraceLevel.Error, response.ErrorException, "Could not {0} (wrong status returned - {1}): {2}", data.Operation, response.StatusCode, responseContent);
+
+            this.HandleUnexpectedResponse(data);
+            
             throw new RestException("Wrong status returned: " + response.StatusDescription, response.Content, response.StatusCode);
+        }
+
+        protected internal virtual void HandleUnexpectedResponse(RequestData data)
+        {
+            // by default, do nothing
         }
 
         protected internal virtual void TraceResponse(RequestData data)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using RestSharp;
 
@@ -11,14 +12,13 @@ namespace Salience.FluentApi.Internal
         public string ResourcePath { get; set; }
         public Method Method { get; set; }
         public Action<RestRequest> RequestCustomizer { get; set; }
-        public HttpStatusCode[] ExpectedStatusCodes { get; set; }
+        public HashSet<HttpStatusCode> ExpectedStatusCodes { get; set; }
         public RestRequest Request { get; set; }
 
         public bool ReturnRawResponseContent { get; set; }
         public Type ResponseBodyType { get; set; }
         public IRestResponse Response { get; set; }
-        public bool HasDefaultResult { get; set; }
-        public object DefaultResult { get; set; }
+        public Dictionary<HttpStatusCode, object> AlternateResults { get; set; }
         public Delegate ResultGetter { get; set; }
         public object Result { get; set; }
     }

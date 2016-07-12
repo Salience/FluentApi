@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -11,10 +12,10 @@ namespace Salience.FluentApi.Internal
         protected readonly FluentClient _client;
         protected readonly RequestData _data;
 
-        public FluentRequest(FluentClient client, RequestData description)
+        public FluentRequest(FluentClient client, RequestData data)
         {
             _client = client;
-            _data = description;
+            _data = data;
         }
 
         IRequestWithOperation IEmptyRequest.To(string operation)
@@ -86,7 +87,9 @@ namespace Salience.FluentApi.Internal
 
         IRequestWithExpectedStatus IRequestWithUrl.Expecting(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes)
         {
-            _data.ExpectedStatusCodes = new[] { expectedStatusCode }.Concat(otherAcceptedStatusCodes).ToArray();
+            _data.ExpectedStatusCodes.Add(expectedStatusCode);
+            foreach(var code in otherAcceptedStatusCodes)
+                _data.ExpectedStatusCodes.Add(code);
             return this;
         }
 
@@ -134,21 +137,19 @@ namespace Salience.FluentApi.Internal
 
     internal class FluentRequestWithContent<T> : FluentRequest, IRequestWithContent<T>
     {
-        public FluentRequestWithContent(FluentClient client, RequestData description)
-            : base(client, description)
+        public FluentRequestWithContent(FluentClient client, RequestData data)
+            : base(client, data)
         {
         }
 
-        IExecutableRequest<T> IRequestWithContent<T>.OrIfNotFound(T defaultResult)
+        IRequestWithAlternateResult<T> IRequestWithContent<T>.Or(T alternateResult)
         {
-            _data.HasDefaultResult = true;
-            _data.DefaultResult = defaultResult;
-            return this;
+            return new FluentRequestWithAlternateContent<T>(this, _data, alternateResult);
         }
 
-        IExecutableRequest<T> IRequestWithContent<T>.OrDefaultIfNotFound()
+        IRequestWithContent<T> IRequestWithContent<T>.OrDefaultIfNotFound()
         {
-            return ((IRequestWithContent<T>)this).OrIfNotFound(default(T));
+            return ((IRequestWithContent<T>)this).Or(default(T)).IfNotFound();
         }
 
         T IExecutableRequest<T>.Execute()
@@ -161,6 +162,44 @@ namespace Salience.FluentApi.Internal
         {
             await _client.HandleRequestAsync(_data);
             return (T)_data.Result;
+        }
+    }
+
+    internal class FluentRequestWithAlternateContent<T> : IRequestWithAlternateResult<T>
+    {
+        private readonly FluentRequestWithContent<T> _request;
+        private readonly RequestData _data;
+        private readonly object _alternateContent;
+
+        public FluentRequestWithAlternateContent(FluentRequestWithContent<T> request, RequestData description, object alternateContent)
+        {
+            _request = request;
+            _data = description;
+            _alternateContent = alternateContent;
+        }
+
+        IRequestWithContent<T> IRequestWithAlternateResult<T>.If(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes)
+        {
+            _data.ExpectedStatusCodes.Add(expectedStatusCode);
+            _data.AlternateResults.Add(expectedStatusCode, _alternateContent);
+
+            foreach(var code in otherAcceptedStatusCodes)
+            {
+                _data.ExpectedStatusCodes.Add(code);
+                _data.AlternateResults.Add(code, _alternateContent);
+            }
+
+            return _request;
+        }
+
+        IRequestWithContent<T> IRequestWithAlternateResult<T>.IfNotFound()
+        {
+            return ((IRequestWithAlternateResult<T>)this).If(HttpStatusCode.NotFound);
+        }
+
+        IRequestWithContent<T> IRequestWithAlternateResult<T>.IfNoContent()
+        {
+            return ((IRequestWithAlternateResult<T>)this).If(HttpStatusCode.NoContent);
         }
     }
 }

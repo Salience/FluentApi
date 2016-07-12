@@ -79,7 +79,9 @@ namespace Salience.FluentApi
         {
             return new RequestData
             {
-                BaseApiPath = _defaultBaseApiPath
+                BaseApiPath = _defaultBaseApiPath,
+                ExpectedStatusCodes = new HashSet<HttpStatusCode> { HttpStatusCode.OK },
+                AlternateResults = new Dictionary<HttpStatusCode, object>()
             };
         }
 
@@ -196,10 +198,7 @@ namespace Salience.FluentApi
             }
 
             // check status
-            if(response.StatusCode == HttpStatusCode.NotFound && data.HasDefaultResult)
-                return;
-
-            if(data.ExpectedStatusCodes != null && data.ExpectedStatusCodes.Contains(response.StatusCode))
+            if(data.ExpectedStatusCodes.Contains(response.StatusCode))
                 return;
 
             if(200 <= (int)response.StatusCode && (int)response.StatusCode < 300)
@@ -226,9 +225,9 @@ namespace Salience.FluentApi
             if(data.ResponseBodyType == null)
                 return;
 
-            if(data.Response.StatusCode == HttpStatusCode.NotFound && data.HasDefaultResult)
+            if(data.AlternateResults.ContainsKey(data.Response.StatusCode))
             {
-                data.Result = data.DefaultResult;
+                data.Result = data.AlternateResults[data.Response.StatusCode];
                 return;
             }
 

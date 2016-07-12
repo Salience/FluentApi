@@ -8,14 +8,35 @@ namespace Salience.FluentApi
         /// <summary>
         /// Specifies a default result for the request when receiving a 404 - NotFound response
         /// </summary>
-        /// <param name="defaultResult">The default result</param>
         /// <returns>This request</returns>
-        IExecutableRequest<T> OrIfNotFound(T defaultResult);
+        IRequestWithContent<T> OrDefaultIfNotFound();
 
         /// <summary>
-        /// Specifies that a default result will be returned for the request when receiving a 404 - NotFound response
+        /// Specifies an alternate result for the request
+        /// </summary>
+        /// <param name="alternateResult">The alternate result</param>
+        /// <returns>This request</returns>
+        IRequestWithAlternateResult<T> Or(T alternateResult);
+    }
+
+    public interface IRequestWithAlternateResult<T>
+    {
+        /// <summary>
+        /// Return the alternate result when receiving a 404 - NotFound response
         /// </summary>
         /// <returns>This request</returns>
-        IExecutableRequest<T> OrDefaultIfNotFound();
+        IRequestWithContent<T> If(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes);
+
+        /// <summary>
+        /// Return the alternate result when receiving a 404 - NotFound response
+        /// </summary>
+        /// <returns>This request</returns>
+        IRequestWithContent<T> IfNotFound();
+
+        /// <summary>
+        /// Return the alternate result when receiving a 204 - NoContent response
+        /// </summary>
+        /// <returns>This request</returns>
+        IRequestWithContent<T> IfNoContent();
     }
 }

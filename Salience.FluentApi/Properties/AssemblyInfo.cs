@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Salience")]
 [assembly: AssemblyProduct("Salience.FluentApi")]
-[assembly: AssemblyCopyright("Copyright © Salience 2016")]
+[assembly: AssemblyCopyright("Copyright © Salience 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

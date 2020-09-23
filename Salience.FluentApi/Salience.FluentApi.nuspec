@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Salience.FluentApi</id>
+    <version>1.7.0</version>
+    <title>FluentApi</title>
+    <authors>Julien Patte - Salience</authors>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/Salience/FluentApi/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A simple wrapper around RestSharp and Json.NET, designed to ease the writing of requests to REST APIs while taking care of errors management and tracing.</description>
+    <tags>fluentapi, rest, restsharp, json.net</tags>
+    <releaseNotes>Updated to .NET 4.7.2</releaseNotes>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>

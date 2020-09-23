@@ -1,5 +1,6 @@
 ﻿using System;
 using RestSharp;
+using RestSharp.Authenticators;
 using Salience.FluentApi;
 
 namespace FluentApi.TwitterExample
@@ -17,12 +18,12 @@ namespace FluentApi.TwitterExample
                 .To("obtain a bearer token")
                 .Post("oauth2/token", r => r
                     .AddParameter("grant_type", "client_credentials", ParameterType.GetOrPost))
-                .Expecting((dynamic response) => (string)response.access_token);
+                .Expecting((dynamic response) => response.access_token as string);
 
             var accessToken = obtainBearerTokenRequest.Execute();
 
             // Authenticate API requests with the bearer token
-            var apiClient = new FluentClient("https://api.twitter.com", "/1.1");
+            var apiClient = new FluentClient("https://api.twitter.com", "1.1");
             apiClient.SetAuthenticator(
                 new OAuth2AuthorizationRequestHeaderAuthenticator(accessToken, "Bearer"));
 

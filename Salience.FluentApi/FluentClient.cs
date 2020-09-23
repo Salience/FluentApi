@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RestSharp;
+using RestSharp.Authenticators;
 using Salience.FluentApi.Internal;
 
 namespace Salience.FluentApi

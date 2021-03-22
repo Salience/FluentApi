@@ -66,6 +66,16 @@ namespace Salience.FluentApi.Internal
             return this.SetMethodAndPath(Method.PUT, resourcePath, requestCustomizer);
         }
 
+        IRequestWithMethod IRequestWithOperation.Patch(string resourcePath)
+        {
+            return this.SetMethodAndPath(Method.PATCH, resourcePath);
+        }
+
+        IRequestWithMethod IRequestWithOperation.Patch(string resourcePath, Action<RestRequest> requestCustomizer)
+        {
+            return this.SetMethodAndPath(Method.PATCH, resourcePath, requestCustomizer);
+        }
+
         IRequestWithMethod IRequestWithOperation.Delete(string resourcePath)
         {
             return this.SetMethodAndPath(Method.DELETE, resourcePath);

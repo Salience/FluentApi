@@ -141,10 +141,9 @@ namespace Salience.FluentApi
             {
                 data.Request.Resource = data.BaseApiPath + data.ResourcePath;
                 data.Request.Method = data.Method;
-                if(data.RequestCustomizer != null)
-                    data.RequestCustomizer(data.Request);
+                data.RequestCustomizer?.Invoke(data.Request);
 
-                if(data.Method == Method.POST || data.Method == Method.PUT)
+                if (data.Method == Method.POST || data.Method == Method.PUT || data.Method == Method.PATCH)
                     if(!data.Request.Parameters.Any(p => p.Type == ParameterType.HttpHeader && p.Name == "Content-Type"))
                         data.Request.AddHeader("Content-Type", "application/json");
             }
@@ -168,23 +167,9 @@ namespace Salience.FluentApi
             data.Response = _restClient.Execute(data.Request);
         }
 
-        protected internal virtual Task ExecuteRequestAsync(RequestData data)
+        protected internal virtual async Task ExecuteRequestAsync(RequestData data)
         {
-            var tcs = new TaskCompletionSource<object>();
-            _restClient.ExecuteAsync(data.Request, (response, handle) =>
-            {
-                try
-                {
-                    data.Response = response;
-                    tcs.SetResult(null);
-                }
-                catch(Exception e)
-                {
-                    tcs.SetException(e);
-                }
-            });
-
-            return tcs.Task;
+            data.Response = await _restClient.ExecuteAsync(data.Request);
         }
 
         protected internal virtual void ValidateResponse(RequestData data)

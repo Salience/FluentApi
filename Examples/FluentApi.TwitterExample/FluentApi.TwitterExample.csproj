@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Salience.FluentApi\Salience.FluentApi.csproj">
-      <Project>{527c8a48-5d95-480e-8c06-47c0710c6f47}</Project>
+      <Project>{0dcf837d-4a76-477b-82eb-97354a49e493}</Project>
       <Name>Salience.FluentApi</Name>
     </ProjectReference>
   </ItemGroup>

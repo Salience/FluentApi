@@ -11,6 +11,12 @@ namespace Salience.FluentApi
         IRequestWithContent<string> WithRawContent();
 
         /// <summary>
+        /// Specifies that the request result should be produced from the raw string content received.
+        /// </summary>
+        /// <returns>This request</returns>
+        IRequestWithContent<TResult> WithRawContent<TResult>(Func<string, TResult> resultGetter);
+
+        /// <summary>
         /// Specifies the type of the expected response body.
         /// </summary>
         /// <typeparam name="T">The type of the expected response body</typeparam>

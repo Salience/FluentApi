@@ -6,7 +6,7 @@ namespace FluentApi.TwitterExample
     class UnderscorePropertyNamesContractResolver : DefaultContractResolver
     {
         public UnderscorePropertyNamesContractResolver()
-            : base(true)
+            : base()
         {
         }
 

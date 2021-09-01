@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Salience.FluentApi
@@ -12,7 +14,11 @@ namespace Salience.FluentApi
         /// <summary>
         /// Executes the request asynchronously.
         /// </summary>
-        Task ExecuteAsync();
+        Task ExecuteAsync(CancellationToken token = default);
+
+        IExecutableRequest AndThen(IExecutableRequest otherRequest);
+
+        IExecutableRequest<T> AndThen<T>(IExecutableRequest<T> otherRequest);
     }
 
     public interface IExecutableRequest<T>
@@ -27,6 +33,10 @@ namespace Salience.FluentApi
         /// Executes the request asynchronously.
         /// </summary>
         /// <returns>The deserialized response body</returns>
-        Task<T> ExecuteAsync();
+        Task<T> ExecuteAsync(CancellationToken token = default);
+
+        IExecutableRequest AndThen(Func<T, IExecutableRequest> otherRequest);
+
+        IExecutableRequest<T2> AndThen<T2>(Func<T, IExecutableRequest<T2>> otherRequest);
     }
 }

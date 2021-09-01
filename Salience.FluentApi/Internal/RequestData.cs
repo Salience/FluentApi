@@ -15,11 +15,14 @@ namespace Salience.FluentApi.Internal
         public HashSet<HttpStatusCode> ExpectedStatusCodes { get; set; }
         public RestRequest Request { get; set; }
 
-        public bool ReturnRawResponseContent { get; set; }
+        public bool UseRawResponseContent { get; set; }
         public Type ResponseBodyType { get; set; }
         public IRestResponse Response { get; set; }
         public Dictionary<HttpStatusCode, object> AlternateResults { get; set; }
         public Delegate ResultGetter { get; set; }
-        public object Result { get; set; }
+
+        public List<FollowUpRequestProvider> FollowUps { get; set; } = new List<FollowUpRequestProvider>();
     }
+
+    public delegate IExecutableRequest<object> FollowUpRequestProvider(object previousResult);
 }

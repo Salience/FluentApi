@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.11.0</Version>
+    <Version>1.12.0</Version>
     <Authors>Julien Patte - Salience</Authors>
     <Company>Salience</Company>
     <Description>A simple wrapper around RestSharp and Json.NET, designed to ease the writing of requests to REST APIs while taking care of errors management and tracing.</Description>
@@ -10,19 +10,19 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Salience/FluentApi/</PackageProjectUrl>
     <PackageTags>fluentapi, rest, restsharp, json.net</PackageTags>
-    <PackageReleaseNotes>Improved compatibility with MS Extensions Loggers</PackageReleaseNotes>
+    <PackageReleaseNotes>New features:
+- Ability to chain requests
+- Completed requests
+- Ability to post-process raw responses
+- Now supporting CancellationTokens</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>1.11.0.0</AssemblyVersion>
-    <FileVersion>1.11.0.0</FileVersion>
+    <AssemblyVersion>1.12.0.0</AssemblyVersion>
+    <FileVersion>1.12.0.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile>D:\Projects\FluentApi\Salience.FluentApi\Salience.FluentApi.xml</DocumentationFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using RestSharp;
 
@@ -98,7 +99,7 @@ namespace Salience.FluentApi.Internal
         IRequestWithExpectedStatus IRequestWithUrl.Expecting(HttpStatusCode expectedStatusCode, params HttpStatusCode[] otherAcceptedStatusCodes)
         {
             _data.ExpectedStatusCodes.Add(expectedStatusCode);
-            foreach(var code in otherAcceptedStatusCodes)
+            foreach (var code in otherAcceptedStatusCodes)
                 _data.ExpectedStatusCodes.Add(code);
             return this;
         }
@@ -120,8 +121,16 @@ namespace Salience.FluentApi.Internal
 
         IRequestWithContent<string> IRequestWithExpectedStatus.WithRawContent()
         {
-            _data.ReturnRawResponseContent = true;
+            _data.UseRawResponseContent = true;
             return new FluentRequestWithContent<string>(_client, _data);
+        }
+
+        IRequestWithContent<TResult> IRequestWithExpectedStatus.WithRawContent<TResult>(Func<string, TResult> resultGetter)
+        {
+            _data.UseRawResponseContent = true;
+            _data.ResponseBodyType = typeof(TResult);
+            _data.ResultGetter = resultGetter;
+            return new FluentRequestWithContent<TResult>(_client, _data);
         }
 
         IRequestWithContent<T> IRequestWithExpectedStatus.WithContent<T>()
@@ -130,7 +139,7 @@ namespace Salience.FluentApi.Internal
         }
 
         IRequestWithContent<TResult> IRequestWithExpectedStatus.WithContent<TResponse, TResult>(Func<TResponse, TResult> resultGetter)
-        {           
+        {
             return ((IRequestWithUrl)this).Expecting(resultGetter);
         }
 
@@ -139,9 +148,22 @@ namespace Salience.FluentApi.Internal
             _client.HandleRequest(_data);
         }
 
-        async Task IExecutableRequest.ExecuteAsync()
+        Task IExecutableRequest.ExecuteAsync(CancellationToken token)
         {
-            await _client.HandleRequestAsync(_data);
+            return _client.HandleRequestAsync(_data, token);
+        }
+
+
+        IExecutableRequest IExecutableRequest.AndThen(IExecutableRequest otherRequest)
+        {
+            _data.FollowUps.Add(_ => new VoidExecutableRequestWrapper(otherRequest));
+            return this;
+        }
+
+        IExecutableRequest<T> IExecutableRequest.AndThen<T>(IExecutableRequest<T> otherRequest)
+        {
+            _data.FollowUps.Add(_ => new ExecutableRequestWithContentWrapper<T>(otherRequest));
+            return new FluentRequestWithContent<T>(_client, _data);
         }
     }
 
@@ -164,14 +186,24 @@ namespace Salience.FluentApi.Internal
 
         T IExecutableRequest<T>.Execute()
         {
-            _client.HandleRequest(_data);
-            return (T)_data.Result;
+            return (T) _client.HandleRequest(_data);
         }
 
-        async Task<T> IExecutableRequest<T>.ExecuteAsync()
+        async Task<T> IExecutableRequest<T>.ExecuteAsync(CancellationToken token)
         {
-            await _client.HandleRequestAsync(_data);
-            return (T)_data.Result;
+            return (T) await _client.HandleRequestAsync(_data, token);
+        }
+
+        IExecutableRequest IExecutableRequest<T>.AndThen(Func<T, IExecutableRequest> otherRequest)
+        {
+            _data.FollowUps.Add(result => new VoidExecutableRequestWrapper(otherRequest((T)result)));
+            return new FluentRequest(_client, _data);
+        }
+
+        IExecutableRequest<T2> IExecutableRequest<T>.AndThen<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
+        {
+            _data.FollowUps.Add(result => new ExecutableRequestWithContentWrapper<T2>(otherRequest((T)result)));
+            return new FluentRequestWithContent<T2>(_client, _data);
         }
     }
 

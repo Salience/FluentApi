@@ -111,7 +111,7 @@ namespace Salience.FluentApi
             catch(Exception) { }
         }
 
-        protected internal virtual void HandleRequest(RequestData data)
+        protected internal virtual object HandleRequest(RequestData data)
         {
             this.CreateRestRequest(data);
             this.ConfigureRequest(data);
@@ -119,18 +119,40 @@ namespace Salience.FluentApi
             this.ExecuteRequest(data);
             this.ValidateResponse(data);
             this.TraceResponse(data);
-            this.GetResultFromResponse(data);
+
+            var result = this.GetResultFromResponse(data);
+
+            foreach(var followup in data.FollowUps)
+            {
+                var nextRequest = followup(result);
+                result = nextRequest.Execute();
+            }
+
+            return result;
         }
 
-        protected internal virtual async Task HandleRequestAsync(RequestData data)
+        protected internal virtual async Task<object> HandleRequestAsync(RequestData data, System.Threading.CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
+
             this.CreateRestRequest(data);
             this.ConfigureRequest(data);
             this.TraceRequest(data);
             await this.ExecuteRequestAsync(data);
             this.ValidateResponse(data);
             this.TraceResponse(data);
-            this.GetResultFromResponse(data);
+
+            var result = this.GetResultFromResponse(data);
+
+            foreach (var followup in data.FollowUps)
+            {
+                token.ThrowIfCancellationRequested();
+
+                var nextRequest = followup(result);
+                result = await nextRequest.ExecuteAsync();
+            }
+
+            return result;
         }
 
         protected internal virtual void CreateRestRequest(RequestData data)
@@ -216,22 +238,16 @@ namespace Salience.FluentApi
             this.Trace(TraceLevel.Debug, "Received response to {0}: {1}", data.Operation, data.Response.Content ?? "(no content)");
         }
 
-        protected internal virtual void GetResultFromResponse(RequestData data)
+        protected internal virtual object GetResultFromResponse(RequestData data)
         {
-            if(data.ReturnRawResponseContent)
-            {
-                data.Result = data.Response.Content;
-                return;
-            }
+            if(data.UseRawResponseContent)
+                return (data.ResultGetter != null ? data.ResultGetter.DynamicInvoke(data.Response.Content) : data.Response.Content);
 
-            if(data.ResponseBodyType == null)
-                return;
+            if (data.ResponseBodyType == null)
+                return null;
 
             if(data.AlternateResults.ContainsKey(data.Response.StatusCode))
-            {
-                data.Result = data.AlternateResults[data.Response.StatusCode];
-                return;
-            }
+                return data.AlternateResults[data.Response.StatusCode];
 
             try
             {
@@ -240,7 +256,7 @@ namespace Salience.FluentApi
                     var jsonReader = new JsonTextReader(reader);
 
                     var responseBody = this.Serializer.Deserialize(jsonReader, data.ResponseBodyType);
-                    data.Result = (data.ResultGetter != null ? data.ResultGetter.DynamicInvoke(responseBody) : responseBody);
+                    return (data.ResultGetter != null ? data.ResultGetter.DynamicInvoke(responseBody) : responseBody);
                 }
             }
             catch(Exception ex)

@@ -93,14 +93,22 @@ namespace Salience.FluentApi
 
         protected internal virtual void Trace(TraceLevel level, string messageFormat, params object[] args)
         {
-            foreach(var traceWriter in _traceWriters)
-                traceWriter.Trace(level, string.Format(messageFormat, args));
+            try
+            {
+                foreach(var traceWriter in _traceWriters)
+                    traceWriter.Trace(level, null, messageFormat, args);
+            }
+            catch(Exception) { }
         }
 
         protected internal virtual void TraceError(TraceLevel level, Exception exception, string messageFormat, params object[] args)
         {
-            foreach(var traceWriter in _traceWriters)
-                traceWriter.Trace(level, string.Format(messageFormat, args), exception);
+            try
+            {
+                foreach(var traceWriter in _traceWriters)
+                    traceWriter.Trace(level, exception, messageFormat, args);
+            }
+            catch(Exception) { }
         }
 
         protected internal virtual void HandleRequest(RequestData data)

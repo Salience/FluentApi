@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Salience.FluentApi.TraceWriters</name>
+    </assembly>
+    <members>
+        <member name="T:Salience.FluentApi.TraceWriters.ConsoleTraceWriter">
+            <summary>
+            Outputs traces in the Console.
+            </summary>
+            <remarks>The foreground color will depend on the trace level.</remarks>
+        </member>
+        <member name="T:Salience.FluentApi.TraceWriters.LoggerTraceWriter">
+            <summary>
+            Output traces using the provided <see cref="T:Microsoft.Extensions.Logging.ILogger"/>.
+            </summary>
+        </member>
+    </members>
+</doc>

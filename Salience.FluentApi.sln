@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentApi.TwitterExample", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Salience.FluentApi", "Salience.FluentApi\Salience.FluentApi.csproj", "{0DCF837D-4A76-477B-82EB-97354A49E493}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Salience.FluentApi.TraceWriters", "Salience.FluentApi.TraceWriters\Salience.FluentApi.TraceWriters.csproj", "{49EBBA9F-DCCF-4A9A-AA13-CE51AE69DB78}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{0DCF837D-4A76-477B-82EB-97354A49E493}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0DCF837D-4A76-477B-82EB-97354A49E493}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0DCF837D-4A76-477B-82EB-97354A49E493}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49EBBA9F-DCCF-4A9A-AA13-CE51AE69DB78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49EBBA9F-DCCF-4A9A-AA13-CE51AE69DB78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49EBBA9F-DCCF-4A9A-AA13-CE51AE69DB78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49EBBA9F-DCCF-4A9A-AA13-CE51AE69DB78}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

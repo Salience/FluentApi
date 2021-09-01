@@ -9,6 +9,6 @@ namespace Salience.FluentApi
         /// <summary>
         /// Writes a trace message.
         /// </summary>
-        void Trace(TraceLevel level, string message, Exception exception = null);
+        void Trace(TraceLevel level, Exception exception, string message, params object[] args);
     }
 }

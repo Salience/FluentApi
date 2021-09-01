@@ -50,7 +50,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleTraceWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnderscorePropertyNamesContractResolver.cs" />
@@ -60,6 +59,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Salience.FluentApi.TraceWriters\Salience.FluentApi.TraceWriters.csproj">
+      <Project>{49ebba9f-dccf-4a9a-aa13-ce51ae69db78}</Project>
+      <Name>Salience.FluentApi.TraceWriters</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Salience.FluentApi\Salience.FluentApi.csproj">
       <Project>{0dcf837d-4a76-477b-82eb-97354a49e493}</Project>
       <Name>Salience.FluentApi</Name>

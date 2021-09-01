@@ -24,5 +24,5 @@ namespace Salience.FluentApi.Internal
         public List<FollowUpRequestProvider> FollowUps { get; set; } = new List<FollowUpRequestProvider>();
     }
 
-    public delegate IExecutableRequest<object> FollowUpRequestProvider(object previousResult);
+    public delegate IFinalExecutableRequest<object> FollowUpRequestProvider(object previousResult);
 }

@@ -143,26 +143,37 @@ namespace Salience.FluentApi.Internal
             return ((IRequestWithUrl)this).Expecting(resultGetter);
         }
 
-        void IExecutableRequest.Execute()
+        void IFinalExecutableRequest.Execute()
         {
             _client.HandleRequest(_data);
         }
 
-        Task IExecutableRequest.ExecuteAsync(CancellationToken token)
+        Task IFinalExecutableRequest.ExecuteAsync(CancellationToken token)
         {
             return _client.HandleRequestAsync(_data, token);
         }
 
-
-        IExecutableRequest IExecutableRequest.AndThen(IExecutableRequest otherRequest)
+        IExecutableRequest IExecutableRequest.FollowedBy(IExecutableRequest otherRequest)
         {
-            _data.FollowUps.Add(_ => new VoidExecutableRequestWrapper(otherRequest));
+            _data.FollowUps.Add(_ => new FinalExecutableRequestWrapper(otherRequest));
             return this;
         }
 
-        IExecutableRequest<T> IExecutableRequest.AndThen<T>(IExecutableRequest<T> otherRequest)
+        IExecutableRequest<T> IExecutableRequest.FollowedBy<T>(IExecutableRequest<T> otherRequest)
         {
-            _data.FollowUps.Add(_ => new ExecutableRequestWithContentWrapper<T>(otherRequest));
+            _data.FollowUps.Add(_ => new FinalExecutableRequestWrapper<T>(otherRequest));
+            return new FluentRequestWithContent<T>(_client, _data);
+        }
+
+        IExecutableRequest IExecutableRequest.FollowedBy(Action action)
+        {
+            _data.FollowUps.Add(_ => new FinalActionWrapper(action));
+            return this;
+        }
+
+        IExecutableRequest<T> IExecutableRequest.FollowedBy<T>(Func<T> operation)
+        {
+            _data.FollowUps.Add(_ => new FinalFuncWrapper<T>(operation));
             return new FluentRequestWithContent<T>(_client, _data);
         }
     }
@@ -184,25 +195,37 @@ namespace Salience.FluentApi.Internal
             return ((IRequestWithContent<T>)this).Or(default(T)).IfNotFound();
         }
 
-        T IExecutableRequest<T>.Execute()
+        T IFinalExecutableRequest<T>.Execute()
         {
             return (T) _client.HandleRequest(_data);
         }
 
-        async Task<T> IExecutableRequest<T>.ExecuteAsync(CancellationToken token)
+        async Task<T> IFinalExecutableRequest<T>.ExecuteAsync(CancellationToken token)
         {
             return (T) await _client.HandleRequestAsync(_data, token);
         }
 
-        IExecutableRequest IExecutableRequest<T>.AndThen(Func<T, IExecutableRequest> otherRequest)
+        IExecutableRequest IExecutableRequest<T>.FollowedBy(Func<T, IExecutableRequest> otherRequest)
         {
-            _data.FollowUps.Add(result => new VoidExecutableRequestWrapper(otherRequest((T)result)));
+            _data.FollowUps.Add(result => new FinalExecutableRequestWrapper(otherRequest((T)result)));
             return new FluentRequest(_client, _data);
         }
 
-        IExecutableRequest<T2> IExecutableRequest<T>.AndThen<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
+        IExecutableRequest<T2> IExecutableRequest<T>.FollowedBy<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
         {
-            _data.FollowUps.Add(result => new ExecutableRequestWithContentWrapper<T2>(otherRequest((T)result)));
+            _data.FollowUps.Add(result => new FinalExecutableRequestWrapper<T2>(otherRequest((T)result)));
+            return new FluentRequestWithContent<T2>(_client, _data);
+        }
+
+        IExecutableRequest IExecutableRequest<T>.FollowedBy(Action<T> operation)
+        {
+            _data.FollowUps.Add(result => new FinalActionWrapper(() => operation((T)result)));
+            return new FluentRequest(_client, _data);
+        }
+
+        IExecutableRequest<T2> IExecutableRequest<T>.FollowedBy<T2>(Func<T, T2> transformation)
+        {
+            _data.FollowUps.Add(result => new FinalFuncWrapper<T2>(() => transformation((T)result)));
             return new FluentRequestWithContent<T2>(_client, _data);
         }
     }

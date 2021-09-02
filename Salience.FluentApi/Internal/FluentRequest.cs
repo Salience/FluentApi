@@ -153,13 +153,13 @@ namespace Salience.FluentApi.Internal
             return _client.HandleRequestAsync(_data, token);
         }
 
-        IExecutableRequest IExecutableRequest.FollowedBy(IExecutableRequest otherRequest)
+        IExecutableRequest IExecutableRequest.FollowedByRequest(IExecutableRequest otherRequest)
         {
             _data.FollowUps.Add(_ => new FinalExecutableRequestWrapper(otherRequest));
             return this;
         }
 
-        IExecutableRequest<T> IExecutableRequest.FollowedBy<T>(IExecutableRequest<T> otherRequest)
+        IExecutableRequest<T> IExecutableRequest.FollowedByRequest<T>(IExecutableRequest<T> otherRequest)
         {
             _data.FollowUps.Add(_ => new FinalExecutableRequestWrapper<T>(otherRequest));
             return new FluentRequestWithContent<T>(_client, _data);
@@ -205,13 +205,13 @@ namespace Salience.FluentApi.Internal
             return (T) await _client.HandleRequestAsync(_data, token);
         }
 
-        IExecutableRequest IExecutableRequest<T>.FollowedBy(Func<T, IExecutableRequest> otherRequest)
+        IExecutableRequest IExecutableRequest<T>.FollowedByRequest(Func<T, IExecutableRequest> otherRequest)
         {
             _data.FollowUps.Add(result => new FinalExecutableRequestWrapper(otherRequest((T)result)));
             return new FluentRequest(_client, _data);
         }
 
-        IExecutableRequest<T2> IExecutableRequest<T>.FollowedBy<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
+        IExecutableRequest<T2> IExecutableRequest<T>.FollowedByRequest<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
         {
             _data.FollowUps.Add(result => new FinalExecutableRequestWrapper<T2>(otherRequest((T)result)));
             return new FluentRequestWithContent<T2>(_client, _data);

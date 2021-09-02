@@ -36,7 +36,7 @@ namespace Salience.FluentApi
                 _steps = previousSteps ?? new List<FollowUpRequestProvider>();
             }
 
-            IExecutableRequest IExecutableRequest.FollowedBy(IExecutableRequest otherRequest)
+            IExecutableRequest IExecutableRequest.FollowedByRequest(IExecutableRequest otherRequest)
             {
                 _steps.Add(_ => new FinalExecutableRequestWrapper(otherRequest));
                 return this;
@@ -48,7 +48,7 @@ namespace Salience.FluentApi
                 return this;
             }
 
-            IExecutableRequest IExecutableRequest<T>.FollowedBy(Func<T, IExecutableRequest> otherRequest)
+            IExecutableRequest IExecutableRequest<T>.FollowedByRequest(Func<T, IExecutableRequest> otherRequest)
             {
                 _steps.Add(result => new FinalExecutableRequestWrapper(otherRequest((T)result)));
                 return this;
@@ -60,7 +60,7 @@ namespace Salience.FluentApi
                 return this;
             }
 
-            IExecutableRequest<T2> IExecutableRequest.FollowedBy<T2>(IExecutableRequest<T2> otherRequest)
+            IExecutableRequest<T2> IExecutableRequest.FollowedByRequest<T2>(IExecutableRequest<T2> otherRequest)
             {
                 _steps.Add(_ => new FinalExecutableRequestWrapper<T2>(otherRequest));
                 return new CompletedRequestWrapper<T2>(_steps);
@@ -72,7 +72,7 @@ namespace Salience.FluentApi
                 return new CompletedRequestWrapper<T2>(_steps);
             }
 
-            IExecutableRequest<T2> IExecutableRequest<T>.FollowedBy<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
+            IExecutableRequest<T2> IExecutableRequest<T>.FollowedByRequest<T2>(Func<T, IExecutableRequest<T2>> otherRequest)
             {
                 _steps.Add(result => new FinalExecutableRequestWrapper<T2>(otherRequest((T)result)));
                 return new CompletedRequestWrapper<T2>(_steps);

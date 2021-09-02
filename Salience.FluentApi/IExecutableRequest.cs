@@ -23,7 +23,7 @@ namespace Salience.FluentApi
         /// Indicates another request to be executed immediately after this request.
         /// </summary>
         /// <param name="otherRequest">The other request to execute afterward.</param>
-        IExecutableRequest FollowedBy(IExecutableRequest otherRequest);
+        IExecutableRequest FollowedByRequest(IExecutableRequest otherRequest);
 
         /// <summary>
         /// Indicates an action to execute immediately after this request.
@@ -35,7 +35,7 @@ namespace Salience.FluentApi
         /// Indicates another request to be executed immediately after this request.
         /// </summary>
         /// <param name="otherRequest">The other request to execute afterward.</param>
-        IExecutableRequest<T> FollowedBy<T>(IExecutableRequest<T> otherRequest);
+        IExecutableRequest<T> FollowedByRequest<T>(IExecutableRequest<T> otherRequest);
 
         /// <summary>
         /// Indicates an operation to execute immediately after this request.
@@ -65,7 +65,7 @@ namespace Salience.FluentApi
         /// Indicates another request to be executed immediately after this request.
         /// </summary>
         /// <param name="otherRequest">The other request to execute afterward.</param>
-        IExecutableRequest FollowedBy(Func<T, IExecutableRequest> otherRequest);
+        IExecutableRequest FollowedByRequest(Func<T, IExecutableRequest> otherRequest);
 
         /// <summary>
         /// Indicates an action to execute immediately after this request based on its result.
@@ -77,7 +77,7 @@ namespace Salience.FluentApi
         /// Indicates another request to be executed immediately after this request.
         /// </summary>
         /// <param name="otherRequest">The other request to execute afterward.</param>
-        IExecutableRequest<T2> FollowedBy<T2>(Func<T, IExecutableRequest<T2>> otherRequest);
+        IExecutableRequest<T2> FollowedByRequest<T2>(Func<T, IExecutableRequest<T2>> otherRequest);
 
         /// <summary>
         /// Indicates an operation to transform the result of this request into a different result.

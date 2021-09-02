@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>D:\Projects\FluentApi\Salience.FluentApi.TraceWriters\Salience.FluentApi.TraceWriters.xml</DocumentationFile>
+    <DocumentationFile>Salience.FluentApi.TraceWriters.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

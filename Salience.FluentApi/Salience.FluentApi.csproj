@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>D:\Projects\FluentApi\Salience.FluentApi\Salience.FluentApi.xml</DocumentationFile>
+    <DocumentationFile>Salience.FluentApi.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

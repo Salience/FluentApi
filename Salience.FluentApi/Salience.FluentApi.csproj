@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.13.1</Version>
+    <Version>1.13.2</Version>
     <Authors>Julien Patte - Salience</Authors>
     <Company>Salience</Company>
     <Description>A simple wrapper around RestSharp and Json.NET, designed to ease the writing of requests to REST APIs while taking care of errors management and tracing.</Description>
@@ -16,8 +16,8 @@
 - Ability to post-process raw responses
 - Now supporting CancellationTokens</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>1.13.1.0</AssemblyVersion>
-    <FileVersion>1.13.1.0</FileVersion>
+    <AssemblyVersion>1.13.2.0</AssemblyVersion>
+    <FileVersion>1.13.2.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

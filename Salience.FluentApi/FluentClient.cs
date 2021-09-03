@@ -12,13 +12,20 @@ using Salience.FluentApi.Internal;
 
 namespace Salience.FluentApi
 {
+    /// <summary>
+    /// Represents a REST client able to issue requests over HTTP.
+    /// </summary>
     public class FluentClient : IFluentClient
     {
         private readonly RestClient _restClient;
         private readonly string _defaultBaseApiPath;
         private readonly List<ITraceWriter> _traceWriters = new List<ITraceWriter>();
 
+        /// <inheritdoc/>
         public JsonSerializer Serializer { get; set; }
+
+        /// <inheritdoc/>
+        public RestClient RestClient => _restClient;
 
         public static JsonSerializer GetNewDefaultSerializer()
         {
@@ -40,15 +47,13 @@ namespace Salience.FluentApi
             _defaultBaseApiPath = defaultBaseApiPath.Trim();
             _defaultBaseApiPath = string.IsNullOrEmpty(_defaultBaseApiPath) ? "" : "/" + _defaultBaseApiPath.Trim('/');
             var url = new Uri(host.Trim().TrimEnd('/'), UriKind.Absolute);
-            _restClient = new RestClient { BaseUrl = url };
+            _restClient = new RestClient { BaseUrl = url  };
 
             this.Serializer = GetNewDefaultSerializer();
         }
 
         public IFluentClient SetAuthenticator(IAuthenticator authenticator)
         {
-            Guard.NotNull(authenticator, "authenticator");
-
             _restClient.Authenticator = authenticator;
             return this;
         }

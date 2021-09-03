@@ -3,12 +3,20 @@ using RestSharp.Authenticators;
 
 namespace Salience.FluentApi
 {
+    /// <summary>
+    /// Represents a REST client able to issue requests over HTTP.
+    /// </summary>
     public interface IFluentClient
     {
         /// <summary>
         /// The JSON serializer used to serialize request bodies and deserialize response bodies.
         /// </summary>
         Newtonsoft.Json.JsonSerializer Serializer { get; set; }
+
+        /// <summary>
+        /// The internal RestSharp client used to issue the requests.
+        /// </summary>
+        RestClient RestClient { get; }
 
         /// <summary>
         /// Sets the requests authenticator.
